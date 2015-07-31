@@ -1,3 +1,4 @@
+-- requires subliminal, version 1.0 or newer
 -- default keybinding: b
 -- add the following to your input.conf to change the default keybinding:
 -- keyname script_binding auto_load_subs
