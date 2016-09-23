@@ -3,8 +3,37 @@
 -- add the following to your input.conf to change the default keybinding:
 -- keyname script_binding auto_load_subs
 
-
 local utils = require 'mp.utils'
+
+------------------------------------------------------------------------
+-- USER CONFIG ---------------------------------------------------------
+------------------------------------------------------------------------
+-- SUBL
+--     If subliminal is not in PATH, provide full path to the executable
+--     instead.
+-- TMPDIR
+--     The directory to stuff the subtitles into if the media being
+--     played is a stream. If the directory doesn't exists, it will be
+--     created. The string must end with a slash character.
+--     If the media being played is a local file, the subtitles will be
+--     saved in the directory where the file is.
+-- LANGS
+--     The languages to download the subtitles in.
+-------------------------------------------------------------------------
+local SUBL = "subliminal"
+local TMPDIR = os.getenv("HOME") .. "/.cache/mpv/autosub/"
+local LANGS = {"en", "it"}
+-------------------------------------------------------------------------
+
+
+function print_msg(msg, level)
+	mp.osd_message(msg)
+	if level == "info" then
+		mp.msg.info(msg)
+	elseif level == "warning" then
+		mp.msg.warn(msg)
+	end
+end
 
 
 function execute_command(args)
@@ -50,24 +79,13 @@ end
 
 
 function load_sub_fn()
-	-- If subliminal is not in PATH, provide full path to the executable
-	-- instead.
-	local SUBL = "subliminal"
-	-- The directory to stuff the subtitles into if the media being
-	-- played is a stream. If the media being played is a local file,
-	-- the subtitles will be saved in the directory where the file is.
-	-- The string must end with a slash character.
-	local TMPDIR = os.getenv("HOME") .. "/.cache/mpv/autosub/"
-	-- The languages to download the subtitles in.
-	local LANGS = {"en", "it"}
-
 	local source = "file"
 	local title = mp.get_property("path")
 
 	-- Check if we're dealing with a stream, not a file (there's
 	-- probably a better way to discriminate between those two).
 	if title == nil or title:find("http://") == 1
-		or title:find("https://") == 1 then
+			or title:find("https://") == 1 then
 		title = mp.get_property("media-title")
 		source = "stream"
 		prepare_tmpdir(TMPDIR, title)
@@ -75,8 +93,7 @@ function load_sub_fn()
 
 	local msg = string.format("Searching for subtitles (%s) for %s",
 	table.concat(LANGS, ", "), title)
-	mp.msg.info(msg)
-	mp.osd_message(msg)
+	print_msg(msg, "info")
 
 	local result = download_subtitles(SUBL, source, title, LANGS, TMPDIR)
 
@@ -90,14 +107,12 @@ function load_sub_fn()
 		end
 		msg = string.format("Subtitle download successful.\nSubliminal" ..
 		" says:\n %s ", result.stdout)
-		mp.msg.info(msg)
+		print_msg(msg, "info")
 	else
 		msg = string.format("Subtitle download failed!\nSubliminal" ..
 		" says\n: %s ", result.stdout)
-		mp.msg.warn(msg)
+		print_msg(msg, "warning")
 	end
-	mp.osd_message(msg)
-
 end
 
 
